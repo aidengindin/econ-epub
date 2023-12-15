@@ -4,9 +4,11 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"strings"
 	"time"
-	"fmt"
+	// "fmt"
 )
 
 const baseURL = "https://www.economist.com"
@@ -28,7 +30,18 @@ func main() {
 	doc := getDocument(weeklyEditionURL)
 
 	markdown := buildMarkdown(doc)
-	fmt.Println(markdown)
+	err := os.WriteFile("tmp.md", []byte(markdown), 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	date := time.Now().UTC().Format("2006-01-02")
+	pandocCommand := exec.Command("pandoc", "tmp.md", "-o", "economist-" + date + ".epub")
+	err = pandocCommand.Run()
+	if err != nil {
+		panic(err)
+	}
+	err = os.Remove("tmp.md")
 }
 
 func getDocument(url string) goquery.Document {

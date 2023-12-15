@@ -1,12 +1,6 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
-    # utils.url = "github:numtide/flake-utils";
-    # gomod2nix = {
-    #   url = "github:tweag/gomod2nix";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    #   inputs.utils.follows = "utils";
-    # };
   };
 
   outputs = { self, nixpkgs /*, utils, gomod2nix */ }:
@@ -29,7 +23,6 @@
        let
          pkgs = import nixpkgs {
            inherit system;
-           # overlays = [ gomod2nix.overlays.default ];
          };
        in
          {
@@ -38,6 +31,7 @@
              inherit version;
              src = ./.;
              vendorHash = null;  # this should probably be something else...
+             buildInputs = with pkgs; [ pandoc ];
            };
          });
 
@@ -57,7 +51,7 @@
              gopls
              gotools
              go-tools
-             # gomod2nix.packages.${system}.default
+             pandoc
            ];
          };
        });
