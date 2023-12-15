@@ -1,7 +1,15 @@
 {
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
+    # utils.url = "github:numtide/flake-utils";
+    # gomod2nix = {
+    #   url = "github:tweag/gomod2nix";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    #   inputs.utils.follows = "utils";
+    # };
+  };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs /*, utils, gomod2nix */ }:
     let
       # Generate a user-friendly version number.
       version = builtins.substring 0 8 self.lastModifiedDate;
@@ -19,7 +27,10 @@
    {
      packages = forAllSystems (system:
        let
-         pkgs = nixpkgsFor.${system};
+         pkgs = import nixpkgs {
+           inherit system;
+           # overlays = [ gomod2nix.overlays.default ];
+         };
        in
          {
            default = pkgs.buildGoModule {
@@ -29,5 +40,26 @@
              vendorHash = null;  # this should probably be something else...
            };
          });
+
+     apps = forAllSystems(system: {
+       default = {
+         type = "app";
+         program = "${self.packages.${system}.default}/bin/econ-epub";
+       };
+     });
+
+     devShells = forAllSystems (system:
+       let pkgs = nixpkgsFor.${system};
+       in {
+         default = pkgs.mkShell {
+           buildInputs = with pkgs; [
+             go
+             gopls
+             gotools
+             go-tools
+             # gomod2nix.packages.${system}.default
+           ];
+         };
+       });
    };
 }
